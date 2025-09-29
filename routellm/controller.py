@@ -40,14 +40,14 @@ class ModelPair:
 
 class Controller:
     def __init__(
-        self,
-        routers: list[str],
-        strong_model: str,
-        weak_model: str,
-        config: Optional[dict[str, dict[str, Any]]] = None,
-        api_base: Optional[str] = None,
-        api_key: Optional[str] = None,
-        progress_bar: bool = False,
+            self,
+            routers: list[str],
+            strong_model: str,
+            weak_model: str,
+            config: Optional[dict[str, dict[str, Any]]] = None,
+            api_base: Optional[str] = None,
+            api_key: Optional[str] = None,
+            progress_bar: bool = False,
     ):
         self.model_pair = ModelPair(strong=strong_model, weak=weak_model)
         self.routers = {}
@@ -72,12 +72,12 @@ class Controller:
         # Some Python magic to match the OpenAI Python SDK
         self.chat = SimpleNamespace(
             completions=SimpleNamespace(
-                create=self.completion, acreate=self.acompletion
+                create=self.completion, acreate=self.acompletion, score=self.score
             )
         )
 
     def _validate_router_threshold(
-        self, router: Optional[str], threshold: Optional[float]
+            self, router: Optional[str], threshold: Optional[float]
     ):
         if router is None or threshold is None:
             raise RoutingError("Router or threshold unspecified.")
@@ -103,7 +103,7 @@ class Controller:
         return router, threshold
 
     def _get_routed_model_for_completion(
-        self, messages: list, router: str, threshold: float
+            self, messages: list, router: str, threshold: float
     ):
         # Look at the last turn for routing.
         # Our current routers were only trained on first turn data, so more research is required here.
@@ -116,9 +116,9 @@ class Controller:
 
     # Mainly used for evaluations
     def batch_calculate_win_rate(
-        self,
-        prompts: pd.Series,
-        router: str,
+            self,
+            prompts: pd.Series,
+            router: str,
     ):
         self._validate_router_threshold(router, 0)
         router_instance = self.routers[router]
@@ -134,14 +134,30 @@ class Controller:
 
         return self.routers[router].route(prompt, threshold, self.model_pair)
 
+    def score(self,
+              *,
+              router: Optional[str] = None,
+              threshold: Optional[float] = None,
+              **kwargs,
+              ):
+        self._validate_router_threshold(router, threshold)
+
+        if "model" in kwargs:
+            router, threshold = self._parse_model_name(kwargs["model"])
+
+        prompt = kwargs["messages"][-1]["content"]
+        score_json = self.routers[router].score(prompt, threshold)
+
+        return score_json
+
     # Matches OpenAI's Chat Completions interface, but also supports optional router and threshold args
     # If model name is present, attempt to parse router and threshold using it, otherwise, use the router and threshold args
     def completion(
-        self,
-        *,
-        router: Optional[str] = None,
-        threshold: Optional[float] = None,
-        **kwargs,
+            self,
+            *,
+            router: Optional[str] = None,
+            threshold: Optional[float] = None,
+            **kwargs,
     ):
         if "model" in kwargs:
             router, threshold = self._parse_model_name(kwargs["model"])
@@ -154,11 +170,11 @@ class Controller:
 
     # Matches OpenAI's Async Chat Completions interface, but also supports optional router and threshold args
     async def acompletion(
-        self,
-        *,
-        router: Optional[str] = None,
-        threshold: Optional[float] = None,
-        **kwargs,
+            self,
+            *,
+            router: Optional[str] = None,
+            threshold: Optional[float] = None,
+            **kwargs,
     ):
         if "model" in kwargs:
             router, threshold = self._parse_model_name(kwargs["model"])

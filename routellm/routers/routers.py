@@ -38,11 +38,15 @@ class Router(abc.ABC):
     def calculate_strong_win_rate(self, prompt):
         pass
 
+
     def route(self, prompt, threshold, routed_pair):
         if self.calculate_strong_win_rate(prompt) >= threshold:
             return routed_pair.strong
         else:
             return routed_pair.weak
+
+    def score(self, prompt, threshold):
+        return self.calculate_score(prompt)
 
     def __str__(self):
         return NAME_TO_CLS[self.__class__]
@@ -100,6 +104,17 @@ class CausalLLMRouter(Router):
             return 1
         else:
             return 1 - output["binary_prob"]
+
+    def calculate_score(self, prompt):
+        input = {}
+        input["messages"] = self.to_openai_messages([prompt])
+        output = self.router_model(input)
+        return output
+        # if output is None:
+        #     # Route to strong model if output is invalid
+        #     return 1
+        # else:
+        #     return 1 - output["binary_prob"]
 
 
 @no_parallel
