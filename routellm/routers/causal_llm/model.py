@@ -92,6 +92,7 @@ class CausalLLMClassifier:
                 pad_token_id=self.tokenizer.eos_token_id,
                 output_scores=True,
                 return_dict_in_generate=True,
+                temperature=0.01,
             )
 
         # see https://github.com/huggingface/transformers/blob/main/src/transformers/generation/utils.py#L101

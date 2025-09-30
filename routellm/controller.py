@@ -140,10 +140,12 @@ class Controller:
               threshold: Optional[float] = None,
               **kwargs,
               ):
+
         if "model" in kwargs:
             router, threshold = self._parse_model_name(kwargs["model"])
 
         self._validate_router_threshold(router, threshold)
+
 
         prompt = kwargs["messages"][-1]["content"]
         score_json = self.routers[router].score(prompt, threshold)
